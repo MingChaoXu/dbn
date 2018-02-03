@@ -1,33 +1,32 @@
 import numpy as np
 import idx2numpy
-import Image
-import pickle
+from PIL import Image
+#import pickle
 
+# 训练数据
 images=idx2numpy.convert_from_file("train-images-idx3-ubyte")
-data=[]
-temp=[]
-for image in images:
-    for i in image:
-        for j in i:
-            temp.append(j)
-    data.append(temp)
-    temp=[]
-X = np.asarray(data , 'float32')
-#print X.shape
+# print(images.shape)
+X = images.reshape(images.shape[0],-1)
+X = X.astype('float32')
+#print(X.shape)
 #X = (X-np.min(X,0))/(np.max(X,0)+0.0001)
 X = X/255.0
 #X = np.matrix(X)
+
+# 测试数据
 Y = idx2numpy.convert_from_file("train-labels-idx1-ubyte")
+# print(Y.shape)
 X_test = X[50000:]
 Y_test = Y[50000:]
 X = X[:50000]
 Y = Y[:50000]
 
 sizes=[X.shape[1],100]
+# print(sizes)
 
-class rbm:
+class rbm(object):
     def __init__(self,sizes=[],learning_rate=0.01,numepochs = 1):
-        print 'rbm init ,sizes:',sizes,', numepochs:',numepochs
+        print('rbm init ,sizes:',sizes,', numepochs:',numepochs)
         self.W=np.matrix(np.zeros(sizes,'float32'))
         self.vW=np.matrix(np.zeros(sizes,'float32'))
         
@@ -39,22 +38,23 @@ class rbm:
 
         self.learning_rate = learning_rate
         self.numepochs = numepochs
-	
+
         self.v1=self.b
-	self.v2=self.b
-	self.h1=self.c
-	self.h2=self.c
-	self.c1=self.W
-	self.c2=self.W
-    
+        self.v2=self.b
+        self.h1=self.c
+        self.h2=self.c
+        self.c1=self.W
+        self.c2=self.W
+
+    # 大于阈值则激活
     def sigmrnd(self,X):
         return np.float32(1./(1.+np.exp(-X)) > np.random.random(X.shape))
 
     
     def train(self,X):
-        print 'begin train , X.shape',X.shape,'numepochs:',self.numepochs
+        print('begin train , X.shape',X.shape,'numepochs:',self.numepochs)
         for i in range(self.numepochs):
-	    err = 0
+            err = 0
             for v in X:
                 self.v1 = np.matrix(v)
                 
@@ -62,7 +62,7 @@ class rbm:
                 self.v2 = self.sigmrnd(self.b+np.dot(self.h1,self.W.T))
                 self.h2 = self.sigmrnd(self.c+np.dot(self.v2,self.W))
 
-		
+
                 self.c1 = np.dot(self.h1.T,self.v1).T
                 self.c2 = np.dot(self.h2.T,self.v2).T
 
@@ -73,12 +73,15 @@ class rbm:
                 self.W = self.W + self.vW
                 self.b = self.b + self.vb
                 self.c = self.c + self.vc
-		
-		err = err + np.linalg.norm(self.v1-self.v2)
-            print "err :",err
+
+                err = err + np.linalg.norm(self.v1-self.v2)
+        print("err :",err)
         return self.W,self.b,self.c
+    # 每次都随机预测？在这里需要看一下论文
     def predict(self,X):
         m,n = X.shape
+        # print('m:', m)
+        # print('n:', n)
         return self.sigmrnd(np.dot(np.ones((m,1)),self.c)+np.dot(X,self.W)) 
         
 #rbm1=rbm()
@@ -94,10 +97,10 @@ class rbm:
 #f.close()
 
 
-class dbn:
+class dbn(object):
     def __init__(self,sizes = [],learning_rate = 0.01,numepochs = 1):
         
-        print 'dbn init ,sizes:',sizes,', numepochs:',numepochs        
+        print('dbn init ,sizes:',sizes,', numepochs:',numepochs)
         self.sizes = sizes
         self.rbms = []
         self.learning_rate = learning_rate
@@ -110,8 +113,9 @@ class dbn:
 
     def train(self,X):
         self.X.append(X)
-        #for i in range(self.numepochs):
-	for j in range(len(self.sizes)-1):
+        # for i in range(self.numepochs):
+        for j in range(len(self.sizes)-1):
+            # print('self.X[{0}]:'.format(j), self.X[j].shape)
             self.rbms[j].train(self.X[j])
             self.X.append(self.rbms[j].predict(self.X[j]))
 
@@ -128,7 +132,7 @@ def sigmoid(X):
      return 1.0/(1.0+np.exp(-X))
 
 def gradAscent(data,labels,label):
-    m,n=data.shape
+    m,n=data.shape   # 50000 * 100
     alpha = 0.01
     weights = np.ones((n,1))
     #numepochs = 1
@@ -137,11 +141,11 @@ def gradAscent(data,labels,label):
     #    h=sigmoid(data*weights)
     #    err = (labels-h)
     #    weights = weights + alpha*data.T*err
-    print 'gradAscent begin'
+    print('gradAscent begin')
     numiter=1
     for j in range(numiter):
-        print "numiter:", j
-        dataIndex=range(m)
+        print("numiter:", j)
+        dataIndex=list(range(m))
         for i in range(m):
             alpha = 4.0/(1.0+j+i)+0.01
             randIndex = int(np.random.uniform(0,len(dataIndex)))
@@ -189,7 +193,7 @@ def test():
         sum2[Y_test[index]]=sum2[Y_test[index]]+1
         index = index + 1
     for i in range(10):
-        print float(sum1[i])/float(sum2[i]),' , ',sum1[i],'/',sum2[i]
+        print(float(sum1[i])/float(sum2[i]),' , ',sum1[i],'/',sum2[i])
 
 
 test()
@@ -213,4 +217,4 @@ for j in range(10):
     if pre > temppre:
         temppre = pre
         tempY = j
-        print tempY
+        print(tempY)
