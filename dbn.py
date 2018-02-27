@@ -1,6 +1,7 @@
 import numpy as np
 import idx2numpy
 from PIL import Image
+import time
 
 # import pickle
 
@@ -128,10 +129,15 @@ class dbn(object):
         return X
 
 
-sizes = [X.shape[1], 200, 100]
+sizes = [X.shape[1], 200, 100, 10]
 dbn1 = dbn(sizes, 0.01, 4)
+time_start = time.time()
 dbn1.train(X)
-
+time_end = time.time()
+print('totally cost', time_end - time_start)
+for i in range(len(dbn1.rbms)):
+    np.save("./model/W_{0}.npy".format(i),dbn1.rbms[i].W)
+    np.save("./model/c_{0}.npy".format(i),dbn1.rbms[i].c)
 
 def sigmoid(X):
     return 1.0 / (1.0 + np.exp(-X))
@@ -199,6 +205,7 @@ def test():
         index = index + 1
     for i in range(10):
         print(float(sum1[i]) / float(sum2[i]), ' , ', sum1[i], '/', sum2[i])
+    print('total correct:',float(sum(sum1)) / float(sum(sum2)), ' , ', sum(sum1), '/', sum(sum2))
 
 
 test()
@@ -222,4 +229,4 @@ for j in range(10):
     if pre > temppre:
         temppre = pre
         tempY = j
-        print(tempY)
+        # print(tempY)
