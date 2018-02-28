@@ -29,7 +29,7 @@ def dbn_init(m, L=[]):
         i = L[0]
         # print('i:', i)
         # print(m.weight)
-        # print(m.bias)
+        print(m.bias)
 
 def weights_init(m):
     classname = m.__class__.__name__

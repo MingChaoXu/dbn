@@ -2,6 +2,8 @@ import numpy as np
 import idx2numpy
 from PIL import Image
 import time
+import torch
+import torch.nn as nn
 
 # import pickle
 
@@ -28,17 +30,39 @@ sizes = [X.shape[1], 100]
 
 # print(sizes)
 
+def xavier_init(fan_in, fan_out):
+    w = torch.Tensor(fan_in, fan_out)
+    nn.init.xavier_normal(w)
+    w = np.asmatrix(w.numpy())
+    w = w.astype('float32')
+    if fan_out == 1:
+        w = w.reshape(-1)
+    return w
+
+
 class rbm(object):
     def __init__(self, sizes=[], learning_rate=0.01, numepochs=1):
         print('rbm init ,sizes:', sizes, ', numepochs:', numepochs)
-        self.W = np.matrix(np.zeros(sizes, 'float32'))
-        self.vW = np.matrix(np.zeros(sizes, 'float32'))
+        # Xavier初始化
+        self.W = xavier_init(sizes[0], sizes[1])
+        self.vW = xavier_init(sizes[0], sizes[1])
+        print('W shape:', self.W.shape)
+        self.b = xavier_init(sizes[0], 1)
+        self.vb = xavier_init(sizes[0], 1)
+        print('b shape:', self.b.shape)
+        self.c = xavier_init(sizes[1], 1)
+        self.vc = xavier_init(sizes[1], 1)
+        print('c shape:', self.c.shape)
 
-        self.b = np.matrix(np.zeros(sizes[0], 'float32'))
-        self.vb = np.matrix(np.zeros(sizes[0], 'float32'))
-
-        self.c = np.matrix(np.zeros(sizes[1], 'float32'))
-        self.vc = np.matrix(np.zeros(sizes[1], 'float32'))
+        # 零初始化
+        # self.W = np.matrix(np.zeros(sizes, 'float32'))
+        # self.vW = np.matrix(np.zeros(sizes, 'float32'))
+        #
+        # self.b = np.matrix(np.zeros(sizes[0], 'float32'))
+        # self.vb = np.matrix(np.zeros(sizes[0], 'float32'))
+        #
+        # self.c = np.matrix(np.zeros(sizes[1], 'float32'))
+        # self.vc = np.matrix(np.zeros(sizes[1], 'float32'))
 
         self.learning_rate = learning_rate
         self.numepochs = numepochs
@@ -153,10 +177,10 @@ def gradAscent(data, labels, label):
     #    h=sigmoid(data*weights)
     #    err = (labels-h)
     #    weights = weights + alpha*data.T*err
-    print('gradAscent begin')
+    # print('gradAscent begin')
     numiter = 1
     for j in range(numiter):
-        print("numiter:", j)
+        # print("numiter:", j)
         dataIndex = list(range(m))
         for i in range(m):
             alpha = 4.0 / (1.0 + j + i) + 0.01
